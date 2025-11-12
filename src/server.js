@@ -87,6 +87,9 @@ async function searchHubSpotContacts(searchParams) {
         'jobtitle',
         'lifecyclestage',
         'hs_lead_status',
+        'roofing_pro',
+        'setter',
+        'hubspot_owner_id',
         'notes_last_updated',
         'createdate',
         'lastmodifieddate'
@@ -243,6 +246,27 @@ function generateResultsHTML(contacts, searchParams) {
             <div class="detail-row">
               <span class="label">📊 Lead Status:</span>
               <span class="badge">${props.hs_lead_status}</span>
+            </div>
+          ` : ''}
+
+          ${props.roofing_pro ? `
+            <div class="detail-row">
+              <span class="label">👷 Roofing Pro:</span>
+              <span>${props.roofing_pro}</span>
+            </div>
+          ` : ''}
+
+          ${props.setter ? `
+            <div class="detail-row">
+              <span class="label">🎯 Setter:</span>
+              <span>${props.setter}</span>
+            </div>
+          ` : ''}
+
+          ${props.hubspot_owner_id ? `
+            <div class="detail-row">
+              <span class="label">👤 Owner ID:</span>
+              <span>${props.hubspot_owner_id}</span>
             </div>
           ` : ''}
         </div>
