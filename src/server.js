@@ -218,6 +218,27 @@ function generateResultsHTML(contacts, searchParams) {
             color: #666;
             font-size: 14px;
           }
+          .help-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+          }
+          .help-box h3 {
+            margin: 0 0 10px 0;
+            color: #856404;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .help-box p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+          }
         </style>
       </head>
       <body>
@@ -225,6 +246,10 @@ function generateResultsHTML(contacts, searchParams) {
           <div class="no-results">
             <h1>🔍 No Matches Found</h1>
             <p>We couldn't find any HubSpot contacts matching the search criteria.</p>
+          </div>
+          <div class="help-box">
+            <h3>💡 Tip</h3>
+            <p>If you're confident there's an existing HubSpot contact for this lead, please verify that the <strong>address information is correct</strong> in SalesRabbit. The search uses name, email, phone, and address to find matches.</p>
           </div>
           <div class="search-params">
             <h3>Search Criteria</h3>
