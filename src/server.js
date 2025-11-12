@@ -16,6 +16,61 @@ const hubspotClient = axios.create({
 });
 
 /**
+ * Get HubSpot owner/user details by ID
+ */
+async function getHubSpotOwner(ownerId) {
+  try {
+    const response = await hubspotClient.get(`/crm/v3/owners/${ownerId}`);
+    const owner = response.data;
+    return `${owner.firstName} ${owner.lastName}`;
+  } catch (error) {
+    console.error(`Error fetching owner ${ownerId}:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Resolve user IDs to names for contact properties
+ */
+async function resolveOwnerNames(contacts) {
+  // Get unique owner IDs
+  const ownerIds = new Set();
+  contacts.forEach(contact => {
+    const props = contact.properties;
+    if (props.roofing_pro) ownerIds.add(props.roofing_pro);
+    if (props.setter) ownerIds.add(props.setter);
+    if (props.hubspot_owner_id) ownerIds.add(props.hubspot_owner_id);
+  });
+
+  // Fetch all owner names in parallel
+  const ownerMap = {};
+  await Promise.all(
+    Array.from(ownerIds).map(async (ownerId) => {
+      const ownerName = await getHubSpotOwner(ownerId);
+      if (ownerName) {
+        ownerMap[ownerId] = ownerName;
+      }
+    })
+  );
+
+  // Replace IDs with names
+  contacts.forEach(contact => {
+    const props = contact.properties;
+    if (props.roofing_pro && ownerMap[props.roofing_pro]) {
+      props.roofing_pro_name = ownerMap[props.roofing_pro];
+    }
+    if (props.setter && ownerMap[props.setter]) {
+      props.setter_name = ownerMap[props.setter];
+    }
+    if (props.hubspot_owner_id && ownerMap[props.hubspot_owner_id]) {
+      props.hubspot_owner_name = ownerMap[props.hubspot_owner_id];
+    }
+  });
+
+  return contacts;
+}
+
+/**
  * Search HubSpot contacts by multiple criteria
  */
 async function searchHubSpotContacts(searchParams) {
@@ -249,24 +304,24 @@ function generateResultsHTML(contacts, searchParams) {
             </div>
           ` : ''}
 
-          ${props.roofing_pro ? `
+          ${props.roofing_pro_name ? `
             <div class="detail-row">
               <span class="label">👷 Roofing Pro:</span>
-              <span>${props.roofing_pro}</span>
+              <span>${props.roofing_pro_name}</span>
             </div>
           ` : ''}
 
-          ${props.setter ? `
+          ${props.setter_name ? `
             <div class="detail-row">
               <span class="label">🎯 Setter:</span>
-              <span>${props.setter}</span>
+              <span>${props.setter_name}</span>
             </div>
           ` : ''}
 
-          ${props.hubspot_owner_id ? `
+          ${props.hubspot_owner_name ? `
             <div class="detail-row">
-              <span class="label">👤 Owner ID:</span>
-              <span>${props.hubspot_owner_id}</span>
+              <span class="label">👤 Contact Owner:</span>
+              <span>${props.hubspot_owner_name}</span>
             </div>
           ` : ''}
         </div>
@@ -451,9 +506,14 @@ app.get('/connector', async (req, res) => {
     };
 
     // Search HubSpot
-    const contacts = await searchHubSpotContacts(searchParams);
+    let contacts = await searchHubSpotContacts(searchParams);
 
     console.log(`Found ${contacts.length} matching contacts`);
+
+    // Resolve owner IDs to names
+    if (contacts.length > 0) {
+      contacts = await resolveOwnerNames(contacts);
+    }
 
     // Return HTML results
     const html = generateResultsHTML(contacts, searchParams);
